@@ -94,6 +94,25 @@ public abstract class AbstractReadWriteAccess extends AbstractCachedDomainDataAc
 			Object key,
 			Object value,
 			Object version) {
+		return doPutFromLoad( session, key, value, version, false );
+	}
+
+	@Override
+	public final boolean putFromLoad(
+			SharedSessionContractImplementor session,
+			Object key,
+			Object value,
+			Object version,
+			boolean minimalPutOverride) {
+		return doPutFromLoad( session, key, value, version, minimalPutOverride );
+	}
+
+	private boolean doPutFromLoad(
+			SharedSessionContractImplementor session,
+			Object key,
+			Object value,
+			Object version,
+			boolean minimalPutOverride) {
 		try {
 			log.debugf( "Caching data from load [region=`%s` (%s)] : key[%s] -> value[%s]", getRegion().getName(), getAccessType(), key, value );
 			writeLock.lock();
@@ -101,12 +120,26 @@ public abstract class AbstractReadWriteAccess extends AbstractCachedDomainDataAc
 
 			boolean writable = item == null || item.isWriteable( session.getTransactionStartTimestamp(), version, getVersionComparator() );
 			if ( writable ) {
-				getStorageAccess().putIntoCache(
-						key,
-						new Item( value, version, session.getTransactionStartTimestamp() ),
-						session
-				);
-				return true;
+				if ( minimalPutOverride && version == null && item != null ) {
+					// we didn't have a version to check, so we don't know for
+					// sure whether the cached item is stale, but 'minimal puts'
+					// is enabled, so we just assume it's not stale
+					log.debugf(
+							"Cache put-from-load skipped due to minimal-put [region=`%s` (%s), key=`%s`]",
+							getRegion().getName(),
+							getAccessType(),
+							key
+					);
+					return false;
+				}
+				else {
+					getStorageAccess().putIntoCache(
+							key,
+							new Item( value, version, session.getTransactionStartTimestamp() ),
+							session
+					);
+					return true;
+				}
 			}
 			else {
 				log.debugf(
@@ -125,16 +158,6 @@ public abstract class AbstractReadWriteAccess extends AbstractCachedDomainDataAc
 	}
 
 	protected abstract AccessedDataClassification getAccessedDataClassification();
-
-	@Override
-	public final boolean putFromLoad(
-			SharedSessionContractImplementor session,
-			Object key,
-			Object value,
-			Object version,
-			boolean minimalPutOverride) {
-		return putFromLoad( session, key, value, version );
-	}
 
 	@Override
 	public SoftLock lockItem(SharedSessionContractImplementor session, Object key, Object version) {

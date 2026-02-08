@@ -26,6 +26,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import org.hibernate.AssertionFailure;
+import org.hibernate.CacheMode;
 import org.hibernate.Hibernate;
 import org.hibernate.HibernateException;
 import org.hibernate.LockMode;
@@ -2002,11 +2003,15 @@ public class StatefulPersistenceContext implements PersistenceContext {
 						// prevent identical re-cachings
 						return;
 					}
+					final boolean minimalPutsEnabled =
+							factory.getSessionFactoryOptions().isMinimalPutsEnabled()
+									&& session.getCacheMode() != CacheMode.REFRESH;
 					final boolean put = naturalIdCacheAccessStrategy.putFromLoad(
 							session,
 							naturalIdCacheKey,
 							id,
-							null
+							null,
+							minimalPutsEnabled
 					);
 
 					if ( put && statistics.isStatisticsEnabled() ) {
