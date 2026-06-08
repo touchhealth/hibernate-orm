@@ -9,8 +9,8 @@ plugins {
     id 'com.gradle.enterprise' version '3.2.1'
 }
 
-if ( !JavaVersion.current().java8Compatible ) {
-    throw new GradleException( "Gradle must be run with Java 8 or later" )
+if ( !JavaVersion.current().java11 ) {
+    throw new GradleException( "Gradle must be run with Java 11" )
 }
 
 gradle.ext.baselineJavaVersion = JavaLanguageVersion.of( 8 )
