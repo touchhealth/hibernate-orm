@@ -29,6 +29,11 @@ plugins {
 }
 
 ext {
+	def credentialsProvider = new org.hibernate.build.publish.auth.maven.SettingsXmlCredentialsProvider()
+	mavenRepositoryCredentials = credentialsProvider.determineAuthentication( project['maven.serverId'] )
+}
+
+ext {
 	sonatypeOssrhUser = project.findProperty( 'SONATYPE_OSSRH_USER' )
 	sonatypeOssrhPassword = project.findProperty( 'SONATYPE_OSSRH_PASSWORD' )
 }
