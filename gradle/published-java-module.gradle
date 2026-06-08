@@ -140,6 +140,8 @@ javadoc {
 	}
 }
 
+javadoc.enabled = false
+javadocJar.enabled = false
 
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -155,10 +157,10 @@ publishing {
 				classifier 'sources'
 			}
 
-			artifact( javadocJar ) {
-				// todo : do these really need to be specified twice?
-				classifier "javadoc"
-			}
+//			artifact( javadocJar ) {
+//				// todo : do these really need to be specified twice?
+//				classifier "javadoc"
+//			}
 		}
 	}
 }

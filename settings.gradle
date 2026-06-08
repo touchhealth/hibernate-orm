@@ -125,8 +125,8 @@ else {
     logger.warn( '[WARN] Skipping Java module path integration tests because the JDK does not support it' )
 }
 
-include 'documentation'
-include 'release'
+// include 'documentation'
+// include 'release'
 
 include 'metamodel-generator'
 project(':metamodel-generator').projectDir = new File(rootProject.projectDir, "tooling/metamodel-generator")

@@ -123,9 +123,9 @@ configurations {
 		it.outgoing.artifact(tasks.transformSourcesJar.targetJar) {
 			builtBy tasks.transformSourcesJar
 		}
-		it.outgoing.artifact(tasks.transformJavadocJar.targetJar) {
-			builtBy tasks.transformJavadocJar
-		}
+//		it.outgoing.artifact(tasks.transformJavadocJar.targetJar) {
+//			builtBy tasks.transformJavadocJar
+//		}
 	}
 }
 
