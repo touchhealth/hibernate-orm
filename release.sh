@@ -30,7 +30,7 @@ deploy() {
 
     git checkout "$tag"
     ./gradlew clean
-    ./gradlew publishAllPublicationsToMavenRepository
+    ./gradlew publishPublishedArtifactsPublicationToMavenRepository
     rm "$tag_file"
 
     echo
