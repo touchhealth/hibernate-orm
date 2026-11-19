@@ -255,41 +255,50 @@ public class JdbcResourceLocalTransactionCoordinatorImpl implements TransactionC
 
 		@Override
 		public void commit() {
-			try {
-				if ( rollbackOnly ) {
-					log.debugf( "On commit, transaction was marked for roll-back only, rolling back" );
+			if ( rollbackOnly ) {
+				log.debugf( "On commit, transaction was marked for roll-back only, rolling back" );
 
-					try {
-						rollback();
+				try {
+					rollback();
 
-						if ( jpaCompliance.isJpaTransactionComplianceEnabled() ) {
-							log.debugf( "Throwing RollbackException on roll-back of transaction marked rollback-only on commit" );
-							throw new RollbackException( "Transaction was marked for rollback-only" );
-						}
+					if ( jpaCompliance.isJpaTransactionComplianceEnabled() ) {
+						log.debugf( "Throwing RollbackException on roll-back of transaction marked rollback-only on commit" );
+						throw new RollbackException( "Transaction was marked for rollback-only" );
+					}
 
-						return;
-					}
-					catch (RollbackException e) {
-						throw e;
-					}
-					catch (RuntimeException e) {
-						log.debug( "Encountered failure rolling back failed commit", e );
-						throw e;
-					}
+					return;
 				}
-
-				JdbcResourceLocalTransactionCoordinatorImpl.this.beforeCompletionCallback();
-				jdbcResourceTransaction.commit();
-				JdbcResourceLocalTransactionCoordinatorImpl.this.afterCompletionCallback( true );
+				catch (RollbackException e) {
+					throw e;
+				}
+				catch (RuntimeException e) {
+					log.debug( "Encountered failure rolling back failed commit", e );
+					throw e;
+				}
 			}
-			catch (RollbackException e) {
-				throw e;
+
+			try {
+				JdbcResourceLocalTransactionCoordinatorImpl.this.beforeCompletionCallback();
+				try {
+					jdbcResourceTransaction.commit();
+				}
+				catch (RuntimeException e) {
+					try {
+						JdbcResourceLocalTransactionCoordinatorImpl.this.afterCompletionCallback( false );
+					}
+					catch (RuntimeException e2) {
+						e.addSuppressed( e2 );
+					}
+					throw e;
+				}
+				JdbcResourceLocalTransactionCoordinatorImpl.this.afterCompletionCallback( true );
 			}
 			catch (RuntimeException e) {
 				try {
 					rollback();
 				}
 				catch (RuntimeException e2) {
+					e.addSuppressed( e2 );
 					log.debug( "Encountered failure rolling back failed commit", e2 );
 				}
 				throw e;
@@ -301,7 +310,18 @@ public class JdbcResourceLocalTransactionCoordinatorImpl implements TransactionC
 			try {
 				TransactionStatus status = jdbcResourceTransaction.getStatus();
 				if ( ( rollbackOnly && status != TransactionStatus.NOT_ACTIVE ) || status == TransactionStatus.ACTIVE ) {
-					jdbcResourceTransaction.rollback();
+					try {
+						jdbcResourceTransaction.rollback();
+					}
+					catch (RuntimeException e) {
+						try {
+							JdbcResourceLocalTransactionCoordinatorImpl.this.afterCompletionCallback( false );
+						}
+						catch (RuntimeException e2) {
+							e.addSuppressed( e2 );
+						}
+						throw e;
+					}
 					JdbcResourceLocalTransactionCoordinatorImpl.this.afterCompletionCallback( false );
 				}
 			}

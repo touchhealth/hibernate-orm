@@ -89,6 +89,14 @@ public abstract class AbstractLogicalConnectionImplementor implements LogicalCon
 		}
 		catch( SQLException e ) {
 			status = TransactionStatus.FAILED_COMMIT;
+			try {
+				getConnectionForTransactionManagement().rollback();
+				status = TransactionStatus.ROLLED_BACK;
+			}
+			catch (SQLException e2) {
+				e.addSuppressed( e2 );
+				log.debug( "Encountered failure rolling back failed commit", e2 );
+			}
 			throw new TransactionException( "Unable to commit against JDBC Connection", e );
 		}
 
